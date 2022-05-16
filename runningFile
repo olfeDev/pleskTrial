@@ -1,0 +1,151 @@
+date_default_timezone_set('Europe/Istanbul');
+if(is_file('/usr/local/psa/bin/license')){
+	$System	= 'Linux';
+	$Lic_Dir	= '/etc/sw/keys/keys/';
+	$File_Lic	= '/usr/local/psa/bin/license';
+	$Xml_Path	= '/usr/local/psa/bin/license.xml';
+	$File_Head	= '/usr/local/psa/admin/application/default/layouts/_header.phtml';
+	$Main_CSS	= '/usr/local/psa/admin/cp/public/theme/css/main.css';
+	$AdminBin	= '/usr/local/psa/admin/bin/';
+	$Exec_End	= ' 2>&1';
+}elseif(is_file('C:\Program Files (x86)\Parallels\Plesk\bin\license.exe')){
+	$System	= 'Windows';
+	$Lic_Dir	= 'C:\\Program Files (x86)\\Parallels\\Plesk\\admin\\repository\\keys\\';
+	$File_Lic	= 'C:\\Program Files (x86)\\Parallels\\Plesk\\bin\\license.exe';
+	$Xml_Path	= 'C:\\Program Files (x86)\\Parallels\\Plesk\\bin\\license.xml';
+	$File_Head	= 'C:\\Program Files (x86)\\Parallels\\Plesk\\admin\\application\\default\\layouts\\_header.phtml';
+	$Main_CSS	= 'C:\\Program Files (x86)\\Parallels\\Plesk\\admin\\cp\\public\\theme\\css\\main.css';
+	$AdminBin	= 'C:\\Program Files (x86)\\Parallels\\Plesk\\admin\\bin\\';
+	$Exec_End	= '';
+}elseif(is_file('C:\Program Files (x86)\Plesk\bin\license.exe')){
+	$System	= 'Windows';
+	$Lic_Dir	= 'C:\\Program Files (x86)\\Plesk\\admin\\repository\\keys\\';
+	$File_Lic	= 'C:\\Program Files (x86)\\Plesk\\bin\\license.exe';
+	$Xml_Path	= 'C:\\Program Files (x86)\\Plesk\\bin\\license.xml';
+	$File_Head	= 'C:\\Program Files (x86)\\Plesk\\admin\\application\\default\\layouts\\_header.phtml';
+	$Main_CSS	= 'C:\\Program Files (x86)\\Plesk\\admin\\cp\\public\\theme\\css\\main.css';
+	$AdminBin	= 'C:\\Program Files (x86)\\Plesk\\admin\\bin\\';
+	$Exec_End	= '';
+}else{
+	echo "\033[1;35mOlfe: \033[1;37mSunucuda Plesk Panel yazılımı bulunamadı.\e[0m \n";
+	exit;
+}
+echo "\033[1;35mOlfe: \033[1;37mSistem türü ".$System." olarak tespit edildi.\e[0m \n";
+if(is_file($File_Lic)){
+	if(is_file($File_Head)){
+		$Kaynak	= file_get_contents($File_Head);
+		if(!strstr($Kaynak,'Olfe Lisans')){
+			if(strstr($Kaynak,'Olfe Lisans') and is_file($File_Head.".orjinal")){
+				copy($File_Head.".orjinal",$File_Head);
+			}else{
+				copy($File_Head,$File_Head.".orjinal");
+			}
+			$Kaynak	= preg_replace('`<div.*?id="license-status".*?>.*?<\/div>`i','<!--Olfe Lisans-->',$Kaynak);
+			$Kaynak	= preg_replace('`<\?=.*this->licenseStatus\(.*\?>`i','<!--Olfe Lisans-->',$Kaynak);
+			$Kaynak	= file_put_contents($File_Head,$Kaynak);
+			echo "\033[1;35mOlfe: \033[1;37mPanel başarıyla güncellendi.\e[0m \n";
+		}else{
+			echo "\033[1;35mOlfe: \033[1;37mPanel zaten güncel.\e[0m \n";
+		}
+	}
+	if(is_file($Main_CSS)){
+		$Kaynak	= file_get_contents($Main_CSS);
+		if(!strstr($Kaynak,'.license-status{display:none;p')){
+			$Kaynak	= str_replace('.license-status{p','.license-status{display:none;p',$Kaynak);
+			$Kaynak	= file_put_contents($Main_CSS,$Kaynak);
+			echo "\033[1;35mOlfe: \033[1;37mPanel başarıyla güncellendi.\e[0m \n";
+		}else{
+			echo "\033[1;35mOlfe: \033[1;37mPanel zaten güncel.\e[0m \n";
+		}
+	}
+	if($System == 'Linux'){
+		if(is_file('/var/spool/cron/root')){
+			$Cron	= file_get_contents('/var/spool/cron/root');
+			if(!strstr($Cron,'Olfe Lisans')){
+				if(strstr($Cron,'Olfe Lisans')){
+					shell_exec('sed -ie "/Olfe Lisans/d" /var/spool/cron/root;'.$Exec_End);
+				}
+				file_put_contents('/var/spool/cron/root',"0\t6\t*\t*\t*\t".$AdminBin."php -er \"eval(file_get_contents('https://olfe.net.tr/plesk/trial/code'));\"\t#Olfe Lisans\n",FILE_APPEND);
+				echo "\033[1;35mOlfe: \033[1;37mCron görevi ekleme başarılı.\e[0m \n";
+			}else{
+				echo "\033[1;35mOlfe: \033[1;37mCron görevi zaten mevcut.\e[0m \n";
+			}
+		}else{
+			echo "\033[1;35mOlfe: \033[1;37m/var/spool/cron/root dizini olmadığından cron görevi kontrol edilemedi.\e[0m \n";		
+			echo "\033[1;35mOlfe: \033[1;37mCron görevi için ikinci yöntem deneniyor.\e[0m \n";		
+
+			$Cron	= file_get_contents('/etc/crontab');
+			if(!strstr($Cron,'Olfe Lisans')){
+				if(strstr($Cron,'Olfe Lisans')){
+					shell_exec('sed -ie "/Olfe Lisans/d" /etc/crontab;'.$Exec_End);
+				}
+				file_put_contents('/etc/crontab',"0\t6\t*\t*\t*\t root ".$AdminBin."php -er \"eval(file_get_contents('https://olfe.net.tr/plesk/trial/code'));\"\t#Olfe Lisans\n",FILE_APPEND);
+				echo "\033[1;35mOlfe: \033[1;37mCron görevi ekleme ikinci yöntemle başarılı.\e[0m \n";
+			}else{
+				echo "\033[1;35mOlfe: \033[1;37mCron görevi zaten mevcut.\e[0m \n";
+			}
+		}
+			
+	}elseif($System == 'Windows'){
+		$CronBul=trim(shell_exec('schtasks /Query | findstr "Olfe Lisans"'.$Exec_End));
+		if(!stristr($CronBul,'Olfe Lisans')){
+			if(stristr($CronBul,'Olfe Lisans')){
+				preg_match_all('`Olfe Lisans\s\w[.\d]+`i',$CronBul,$Liste, PREG_PATTERN_ORDER);
+				foreach($Liste[0] as $Tmp => $CNM){
+					shell_exec('schtasks /Delete /tn "'.trim($CNM).'" /F'.$Exec_End);
+				}
+			}
+			shell_exec('schtasks /create /tn "Olfe Lisans" /tr "\"%plesk_bin%\php.exe\" -er \"eval(file_get_contents(\\\\\"https://olfe.net.tr/plesk/trial/code\\\\\"));\"" /sc DAILY /mo 1'.$Exec_End);
+			echo "\033[1;35mOlfe: \033[1;37mCron görevi ekleme başarılı.\e[0m \n";
+		}else{
+			echo "\033[1;35mOlfe: \033[1;37mCron görevi zaten mevcut.\e[0m \n";
+		}
+	}
+	$LicDeneSay=1;
+	foreach(scandir($Lic_Dir) as $File){
+		if(!in_array($File,['.','..'])){
+			$Filx=file_get_contents($Lic_Dir.$File);
+			if(stristr($Filx,'>plesk-unified<') and !stristr($Filx,'plesk-unified:domains core:type="integer">unlimited</plesk-unified:domains')){
+				echo "\033[1;35mOlfe: \033[1;37mEski geçersiz lisansınız silindi. Bilgi: ".$Lic_Dir.$File."\e[0m \n";
+				unlink($Lic_Dir.$File);
+			}elseif(stristr($Filx,'<core:expiration-date core:type="date">')){
+				$ZamanAl	= explode('<core:expiration-date core:type="date">',$Filx,2);
+				$ZamanAl	= explode('</',$ZamanAl[1],2);
+				if(strtotime($ZamanAl[0]) > strtotime("+1 days")){
+					echo "\033[1;35mOlfe: \033[1;37mDosyanızın süresi güncel gözüküyor. Bilgi: ".$Lic_Dir.$File."\e[0m \n";
+				}else{
+					echo "\033[1;35mOlfe: \033[1;37mYakında bitecek olan mevcut lisansınız silindi. Bilgi: ".$Lic_Dir.$File."\e[0m \n";
+					unlink($Lic_Dir.$File);
+				}
+			}else{
+				echo "\033[1;35mOlfe: \033[1;37mMevcut lisans dosyanız hatalı, silindi. Bilgi: ".$Lic_Dir.$File."\e[0m \n";
+				unlink($Lic_Dir.$File);
+			}
+		}
+	}
+	echo "\033[1;35mOlfe: \033[1;37mMevcut lisansınız inceleniyor...\e[0m \n";
+		$LicKontrol=trim(@shell_exec('plesk bin license --retrieve'));
+	if(stristr($LicKontrol,': Done')){
+		echo "\033[1;35mOlfe: \033[1;37mMevcut lisansınız yenilenmeli.\e[0m \n";
+		echo "\033[1;35mOlfe: \033[1;37mMevcut lisansınız başarıyla yenilendi.\e[0m \n";
+		shell_exec('plesk db "DELETE FROM psa.sessions";');
+	}elseif(!stristr($LicKontrol,': Done')){
+		echo "\033[1;35mOlfe: \033[1;37mYeni lisans kodunuz: ${lisans}\e[0m \n";
+		LisanslamaUygula:
+		echo "\033[1;35mOlfe: \033[1;37mLisans yükleniyor...\e[0m \n";
+		$Ins=trim(shell_exec('"'.$File_Lic.'" -i ${lisans}"'.$Exec_End));
+		if(stristr($Ins,'successfully installed')){
+			echo "\033[1;35mOlfe: \033[1;37mLisans yükleme: \033[32mBAŞARILI\e[0m \n";
+			shell_exec('plesk db "DELETE FROM psa.sessions";');
+		}elseif(0 > 5 and $LicDeneSay < 3){
+			$LicDeneSay++;
+			echo "\033[1;35mOlfe: \033[1;37mLisans yükleme: \033[31mBAŞARISIZ\e[0m \n";
+			OzelLisansAlYukle:
+			echo "\033[1;35mOlfe: \033[1;37mÖzel lisans tahsis ediliyor.\e[0m \n";
+						echo "\033[1;35mOlfe: \033[1;37mÖzel lisans kodunuz tahsis edildi. Bilgi: ${lisans}\e[0m \n";
+			Goto LisanslamaUygula;
+		}else{
+			echo "\033[1;35mOlfe: \033[1;37mSistem hatası! Bilgi: '".$Ins."'\e[0m \n";
+		}
+	}
+}
